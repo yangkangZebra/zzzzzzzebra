@@ -1,7 +1,9 @@
 package com.yk.demo.controller;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yk.demo.config.RabbitmqConfig;
 import com.yk.demo.pojo.Shop;
 import com.yk.demo.service.DemoSerive;
 import com.yk.demo.utils.RedisUtils;
@@ -26,6 +29,9 @@ public class DemoController {
 	
 	@Autowired
 	RedisUtils redisUtils;
+	
+	@Autowired
+	RabbitTemplate rabbitTemplate;
 	
 	private static final int TEN = 10;
 	/**
@@ -61,5 +67,16 @@ public class DemoController {
 		}
 		//此时获取结果为null
 		return result;
+	}
+	@PostMapping("/testRabbitMq")
+	public boolean testRabbitmq(@ApiParam(name = "mqMsg", value = "mq传输的值", required = true)@RequestParam String mqMsg){
+		rabbitTemplate.convertAndSend(RabbitmqConfig.TEST_DIRECT_EXCHANGE, 
+				RabbitmqConfig.TEST_ROUTING_KEY, mqMsg);
+		Map<String,String> map = new HashMap<>();
+		map.put("test", mqMsg);
+		rabbitTemplate.convertAndSend(RabbitmqConfig.TEST_DIRECT_EXCHANGE, 
+				RabbitmqConfig.TEST_ROUTING_KEY, map);
+		return true;
+		
 	}
 }
